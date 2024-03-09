@@ -52,7 +52,7 @@ func handleConn(conn net.Conn) {
 		p, err := parser.RespParse()
 		if err != nil {
 			fmt.Println(err.Error())
-			os.Exit(1)
+			continue
 		}
 
 		var resp string

@@ -48,6 +48,10 @@ func parseArray(data []byte) ([]string, error) {
 	args := lines[1:]
 
 	for i := 0; i < l*2; i++ {
+		if i >= len(args) {
+			return []string{}, errors.New("data could not be parsed")
+		}
+
 		arg := args[i]
 		if arg[0] != '$' {
 			out = append(out, arg)
