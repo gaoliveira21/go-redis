@@ -15,16 +15,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
+	defer l.Close()
 
-	n, err := conn.Write([]byte("+PONG\r\n"))
-	if err != nil {
-		fmt.Println("Error sending data: ", err.Error())
-		os.Exit(1)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+
+		n, err := conn.Write([]byte("+PONG\r\n"))
+		if err != nil {
+			fmt.Println("Error sending data: ", err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("sent %d bytes", n)
 	}
-	fmt.Printf("sent %d bytes", n)
 }
