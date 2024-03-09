@@ -17,12 +17,18 @@ func main() {
 
 	defer l.Close()
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
 
+		go handleConn(conn)
+	}
+}
+
+func handleConn(conn net.Conn) {
 	defer conn.Close()
 
 	for {
@@ -38,6 +44,6 @@ func main() {
 			fmt.Println("Error sending data: ", err.Error())
 			os.Exit(1)
 		}
-		fmt.Printf("sent %d bytes", n)
+		fmt.Printf("sent %d bytes\n", n)
 	}
 }
