@@ -17,10 +17,19 @@ func main() {
 
 	defer l.Close()
 
+	conn, err := l.Accept()
+	if err != nil {
+		fmt.Println("Error accepting connection: ", err.Error())
+		os.Exit(1)
+	}
+
+	defer conn.Close()
+
 	for {
-		conn, err := l.Accept()
+		data := make([]byte, 1024)
+		_, err := conn.Read(data)
 		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
+			fmt.Println("Error reading data: ", err.Error())
 			os.Exit(1)
 		}
 
