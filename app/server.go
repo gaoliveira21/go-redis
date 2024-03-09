@@ -1,9 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/redis-starter-go/app/commands"
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
 func main() {
@@ -32,14 +37,36 @@ func handleConn(conn net.Conn) {
 	defer conn.Close()
 
 	for {
-		data := make([]byte, 1024)
-		_, err := conn.Read(data)
+		buffer := make([]byte, 1024)
+		_, err := conn.Read(buffer)
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
 			fmt.Println("Error reading data: ", err.Error())
 			os.Exit(1)
 		}
 
-		n, err := conn.Write([]byte("+PONG\r\n"))
+		parser := resp.NewRespParser(buffer)
+		p, err := parser.RespParse()
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+
+		var resp string
+
+		switch p.Command {
+		case "echo":
+			resp = commands.Echo(p.Args)
+		case "ping":
+			resp = commands.Ping()
+		default:
+			resp = "Command not found"
+		}
+
+		n, err := conn.Write([]byte("+" + resp + "\r\n"))
 		if err != nil {
 			fmt.Println("Error sending data: ", err.Error())
 			os.Exit(1)
