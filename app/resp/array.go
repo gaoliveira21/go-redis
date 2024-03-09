@@ -6,14 +6,9 @@ import (
 	"strings"
 )
 
-type BulkString struct {
-	Len   int
-	Value string
-}
-
-type ArrayMessage struct {
+type RespArray struct {
 	Len  int
-	Args []BulkString
+	Args []RespBulkString
 }
 
 func getLen(s string) (int, error) {
@@ -23,11 +18,11 @@ func getLen(s string) (int, error) {
 	return strconv.Atoi(match)
 }
 
-func parseArray(data []byte) (*ArrayMessage, error) {
+func parseArray(data []byte) (*RespArray, error) {
 	str := string(data)
 	lines := strings.Split(str, "\r\n")
 
-	arrMsg := ArrayMessage{}
+	arrMsg := RespArray{}
 
 	for _, line := range lines {
 		if line[0] == '*' {
@@ -44,7 +39,7 @@ func parseArray(data []byte) (*ArrayMessage, error) {
 			if err != nil {
 				return nil, err
 			}
-			arrMsg.Args = append(arrMsg.Args, BulkString{Len: l})
+			arrMsg.Args = append(arrMsg.Args, NewRespBulkString(l, ""))
 			continue
 		}
 

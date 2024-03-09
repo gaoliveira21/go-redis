@@ -36,6 +36,8 @@ func main() {
 func handleConn(conn net.Conn) {
 	defer conn.Close()
 
+	store := make(map[string]string)
+
 	for {
 		buffer := make([]byte, 1024)
 		_, err := conn.Read(buffer)
@@ -49,24 +51,38 @@ func handleConn(conn net.Conn) {
 		}
 
 		parser := resp.NewRespParser(buffer)
-		p, err := parser.RespParse()
+		msg, err := parser.RespParse()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
 
-		var resp string
+		var response string
 
-		switch p.Command {
+		switch msg.Command {
 		case "echo":
-			resp = commands.Echo(p.Args)
+			r := commands.Echo(msg.Args)
+			response = resp.NewRespString(r)
 		case "ping":
-			resp = commands.Ping()
+			r := commands.Ping()
+			response = resp.NewRespString(r)
+		case "set":
+			commands.Set(store, msg.Args[0], msg.Args[1])
+			response = resp.NewRespString("OK")
+		case "get":
+			v, f := commands.Get(store, msg.Args[0])
+			bs := resp.NewRespBulkString(len(v), v)
+
+			if f {
+				response = bs.Get()
+			} else {
+				response = bs.GetNull()
+			}
 		default:
-			resp = "Command not found"
+			response = resp.NewRespString("Command not found")
 		}
 
-		n, err := conn.Write([]byte("+" + resp + "\r\n"))
+		n, err := conn.Write([]byte(response))
 		if err != nil {
 			fmt.Println("Error sending data: ", err.Error())
 			os.Exit(1)
