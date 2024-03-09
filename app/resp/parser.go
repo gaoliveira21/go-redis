@@ -32,12 +32,13 @@ func (r *RESP) RespParse() (*ParseOutput, error) {
 		return &ParseOutput{Command: r[0], Args: r[1:]}, nil
 	}
 
-	return nil, errors.New("data could not be parsed")
+	return nil, errors.New("RespParse: data could not be parsed")
 }
 
 func parseArray(data []byte) ([]string, error) {
 	str := string(data)
-	lines := strings.Split(str, "\\r\\n")
+	print(str)
+	lines := strings.Split(str, "\r\n")
 
 	l, err := getArrayLen(lines[0])
 	if err != nil {
@@ -49,7 +50,7 @@ func parseArray(data []byte) ([]string, error) {
 
 	for i := 0; i < l*2; i++ {
 		if i >= len(args) {
-			return []string{}, errors.New("data could not be parsed")
+			return []string{}, errors.New("parseArray: data could not be parsed")
 		}
 
 		arg := args[i]
