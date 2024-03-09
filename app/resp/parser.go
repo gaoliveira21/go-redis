@@ -2,16 +2,13 @@ package resp
 
 import (
 	"errors"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 type RESP struct {
 	data []byte
 }
 
-type ParseOutput struct {
+type RespMessage struct {
 	Command string
 	Args    []string
 }
@@ -22,49 +19,24 @@ func NewRespParser(b []byte) *RESP {
 	}
 }
 
-func (r *RESP) RespParse() (*ParseOutput, error) {
+func (r *RESP) RespParse() (*RespMessage, error) {
 	switch r.data[0] {
 	case '*':
-		r, err := parseArray(r.data)
-		if err != nil {
-			return nil, err
+		{
+			r, err := parseArray(r.data)
+			if err != nil {
+				return nil, err
+			}
+
+			args := []string{}
+
+			for _, v := range r.Args[1:] {
+				args = append(args, v.Value)
+			}
+
+			return &RespMessage{Command: r.Args[0].Value, Args: args}, nil
 		}
-		return &ParseOutput{Command: r[0], Args: r[1:]}, nil
+	default:
+		return nil, errors.New("RespParse: data could not be parsed")
 	}
-
-	return nil, errors.New("RespParse: data could not be parsed")
-}
-
-func parseArray(data []byte) ([]string, error) {
-	str := string(data)
-	print(str)
-	lines := strings.Split(str, "\r\n")
-
-	l, err := getArrayLen(lines[0])
-	if err != nil {
-		return []string{}, err
-	}
-
-	out := []string{}
-	args := lines[1:]
-
-	for i := 0; i < l*2; i++ {
-		if i >= len(args) {
-			return []string{}, errors.New("parseArray: data could not be parsed")
-		}
-
-		arg := args[i]
-		if arg[0] != '$' {
-			out = append(out, arg)
-		}
-	}
-
-	return out, nil
-}
-
-func getArrayLen(s string) (int, error) {
-	r, _ := regexp.Compile(`[0-9]+`)
-	match := r.FindString(s)
-
-	return strconv.Atoi(match)
 }
