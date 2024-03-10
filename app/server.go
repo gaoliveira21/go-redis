@@ -2,11 +2,9 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net"
-	"os"
-	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
@@ -14,21 +12,19 @@ import (
 )
 
 func main() {
-	fmt.Println("Logs from your program will appear here!")
-
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
-		os.Exit(1)
+		log.Fatalln("Failed to bind to port 6379")
 	}
+
+	log.Println("Server listening on port 6379")
 
 	defer l.Close()
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
+			log.Fatalln("Error accepting connection: ", err.Error())
 		}
 
 		go handleConn(conn)
@@ -48,60 +44,26 @@ func handleConn(conn net.Conn) {
 				break
 			}
 
-			fmt.Println("Error reading data: ", err.Error())
-			os.Exit(1)
+			log.Fatalln("Error reading data: ", err.Error())
 		}
 
 		parser := resp.NewRespParser(buffer)
 		msg, err := parser.RespParse()
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			continue
 		}
 
-		var response string
-
-		switch msg.Command {
-		case "echo":
-			r := commands.Echo(msg.Args)
-			response = resp.NewRespString(r)
-		case "ping":
-			r := commands.Ping()
-			response = resp.NewRespString(r)
-		case "set":
-			input := &commands.SetIput{
-				Key:   msg.Args[0],
-				Value: msg.Args[1],
-			}
-
-			if len(msg.Args) >= 4 {
-				input.Exp, err = strconv.Atoi(msg.Args[3])
-				if err != nil {
-					fmt.Println("Could not convert exp to type int: ", err.Error())
-					continue
-				}
-			}
-
-			commands.Set(store, input)
-			response = resp.NewRespString("OK")
-		case "get":
-			v, f := commands.Get(store, msg.Args[0])
-			bs := resp.NewRespBulkString(len(v), v)
-
-			if f {
-				response = bs.Get()
-			} else {
-				response = bs.GetNull()
-			}
-		default:
-			response = resp.NewRespString("Command not found")
+		response, err := commands.Handle(msg.Command, msg.Args, store)
+		if err != nil {
+			log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
+			continue
 		}
 
 		n, err := conn.Write([]byte(response))
 		if err != nil {
-			fmt.Println("Error sending data: ", err.Error())
-			os.Exit(1)
+			log.Fatalln("Error sending data: ", err.Error())
 		}
-		fmt.Printf("sent %d bytes\n", n)
+		log.Printf("sent %d bytes\n", n)
 	}
 }
