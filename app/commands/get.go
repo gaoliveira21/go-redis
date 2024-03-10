@@ -1,7 +1,22 @@
 package commands
 
-func Get(store map[string]string, key string) (string, bool) {
-	v, f := store[key]
+import (
+	"time"
 
-	return v, f
+	"github.com/codecrafters-io/redis-starter-go/app/store"
+)
+
+func Get(s store.DataStore, key string) (string, bool) {
+	v, f := s[key]
+
+	if f && !v.ExpiresAt.IsZero() {
+		isExpired := v.ExpiresAt.Before(time.Now())
+
+		if isExpired {
+			delete(s, key)
+			return v.Value, false
+		}
+	}
+
+	return v.Value, f
 }

@@ -6,9 +6,11 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
+	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
 func main() {
@@ -36,7 +38,7 @@ func main() {
 func handleConn(conn net.Conn) {
 	defer conn.Close()
 
-	store := make(map[string]string)
+	store := store.NewDataStore()
 
 	for {
 		buffer := make([]byte, 1024)
@@ -67,7 +69,20 @@ func handleConn(conn net.Conn) {
 			r := commands.Ping()
 			response = resp.NewRespString(r)
 		case "set":
-			commands.Set(store, msg.Args[0], msg.Args[1])
+			input := &commands.SetIput{
+				Key:   msg.Args[0],
+				Value: msg.Args[1],
+			}
+
+			if len(msg.Args) >= 4 {
+				input.Exp, err = strconv.Atoi(msg.Args[3])
+				if err != nil {
+					fmt.Println("Could not convert exp to type int: ", err.Error())
+					continue
+				}
+			}
+
+			commands.Set(store, input)
 			response = resp.NewRespString("OK")
 		case "get":
 			v, f := commands.Get(store, msg.Args[0])
