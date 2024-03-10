@@ -47,8 +47,7 @@ func handleConn(conn net.Conn) {
 			log.Fatalln("Error reading data: ", err.Error())
 		}
 
-		parser := resp.NewRespParser(buffer)
-		msg, err := parser.RespParse()
+		msg, err := resp.RespParse(buffer)
 		if err != nil {
 			log.Println(err.Error())
 			continue

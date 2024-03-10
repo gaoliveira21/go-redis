@@ -13,10 +13,12 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 	switch cmd {
 	case "echo":
 		r := Echo(args)
-		response = resp.NewRespString(r)
+		rs := resp.NewRespString(len(r), r)
+		response = rs.Encode()
 	case "ping":
 		r := Ping()
-		response = resp.NewRespString(r)
+		rs := resp.NewRespString(len(r), r)
+		response = rs.Encode()
 	case "set":
 		input := &SetIput{
 			Key:   args[0],
@@ -32,18 +34,21 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 		}
 
 		Set(s, input)
-		response = resp.NewRespString("OK")
+		rs := resp.NewRespString(2, "OK")
+		response = rs.Encode()
 	case "get":
 		v, f := Get(s, args[0])
 		bs := resp.NewRespBulkString(len(v), v)
 
 		if f {
-			response = bs.Get()
+			response = bs.Encode()
 		} else {
-			response = bs.GetNull()
+			response = bs.EncodeNull()
 		}
 	default:
-		response = resp.NewRespString("Command not found")
+		msg := "Command not found"
+		rs := resp.NewRespString(len(msg), msg)
+		response = rs.Encode()
 	}
 
 	return response, nil

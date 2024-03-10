@@ -4,26 +4,16 @@ import (
 	"errors"
 )
 
-type RESP struct {
-	data []byte
-}
-
 type RespMessage struct {
 	Command string
 	Args    []string
 }
 
-func NewRespParser(b []byte) *RESP {
-	return &RESP{
-		data: b,
-	}
-}
-
-func (r *RESP) RespParse() (*RespMessage, error) {
-	switch r.data[0] {
+func RespParse(data []byte) (*RespMessage, error) {
+	switch data[0] {
 	case '*':
 		{
-			r, err := parseArray(r.data)
+			r, err := parseArray(data)
 			if err != nil {
 				return nil, err
 			}

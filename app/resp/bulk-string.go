@@ -14,12 +14,12 @@ func NewRespBulkString(l int, v string) RespBulkString {
 	}
 }
 
-func (bs *RespBulkString) Get() string {
+func (bs *RespBulkString) Encode() string {
 	v := bs.Value
 
 	return "$" + fmt.Sprintf("%d", len(v)) + "\r\n" + v + "\r\n"
 }
 
-func (bs *RespBulkString) GetNull() string {
+func (bs *RespBulkString) EncodeNull() string {
 	return "$-1\r\n"
 }
