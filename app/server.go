@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -12,12 +14,17 @@ import (
 )
 
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	port := flag.Int("port", 6379, "Server port")
+	flag.Parse()
+
+	strPort := fmt.Sprintf("%d", *port)
+
+	l, err := net.Listen("tcp", "0.0.0.0:"+strPort)
 	if err != nil {
-		log.Fatalln("Failed to bind to port 6379")
+		log.Fatalln("Failed to bind to port " + strPort)
 	}
 
-	log.Println("Server listening on port 6379")
+	log.Println("Server listening on port " + strPort)
 
 	defer l.Close()
 
