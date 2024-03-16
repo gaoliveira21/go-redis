@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,14 +14,16 @@ import (
 )
 
 func main() {
+	serverArgs := GetServerArgs()
 	conf.Replication = &conf.ReplicationConf{
 		Role: "master",
 	}
 
-	port := flag.Int("port", 6379, "Server port")
-	flag.Parse()
+	if serverArgs.masterHost != "" {
+		conf.Replication.Role = "slave"
+	}
 
-	strPort := fmt.Sprintf("%d", *port)
+	strPort := fmt.Sprintf("%d", serverArgs.port)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+strPort)
 	if err != nil {
