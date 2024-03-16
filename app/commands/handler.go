@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
@@ -45,6 +46,18 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 		} else {
 			response = bs.EncodeNull()
 		}
+	case "info":
+		r, err := Info(args[0])
+		if err != nil {
+			return "", err
+		}
+
+		for k, v := range r {
+			str := fmt.Sprintf("%s:%s", k, v)
+			bs := resp.NewRespBulkString(len(str), str)
+			response += bs.Encode()
+		}
+
 	default:
 		msg := "Command not found"
 		rs := resp.NewRespString(len(msg), msg)

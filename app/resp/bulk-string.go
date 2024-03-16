@@ -17,7 +17,7 @@ func NewRespBulkString(l int, v string) RespBulkString {
 func (bs *RespBulkString) Encode() string {
 	v := bs.Value
 
-	return "$" + fmt.Sprintf("%d", len(v)) + "\r\n" + v + "\r\n"
+	return fmt.Sprintf("$%d\r\n%s\r\n", len(v), v)
 }
 
 func (bs *RespBulkString) EncodeNull() string {
