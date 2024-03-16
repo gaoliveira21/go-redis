@@ -9,11 +9,16 @@ import (
 	"net"
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
+	"github.com/codecrafters-io/redis-starter-go/app/conf"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
 func main() {
+	conf.Replication = &conf.ReplicationConf{
+		Role: "master",
+	}
+
 	port := flag.Int("port", 6379, "Server port")
 	flag.Parse()
 
