@@ -2,19 +2,27 @@ package commands
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/conf"
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 )
 
-func Info(t string) (map[string]string, error) {
+func Info(t string) (string, error) {
 	switch t {
 	case "replication":
-		r := make(map[string]string)
+		var sb strings.Builder
 
-		r["role"] = conf.Replication.Role
+		sb.WriteString("# Replication \n")
+		sb.WriteString(fmt.Sprintf("role:%s\n", conf.Replication.Role))
+		sb.WriteString(fmt.Sprintf("master_replid:%s\n", conf.Replication.Id))
+		sb.WriteString(fmt.Sprintf("master_repl_offset:%v", conf.Replication.Offset))
 
-		return r, nil
+		bs := resp.NewRespBulkString(len(sb.String()), sb.String())
+
+		return bs.Encode(), nil
 	default:
-		return nil, errors.New("invalid argument received")
+		return "", errors.New("invalid argument received")
 	}
 }

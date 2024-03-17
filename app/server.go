@@ -15,22 +15,26 @@ import (
 
 func main() {
 	serverArgs := GetServerArgs()
-	conf.Replication = &conf.ReplicationConf{
-		Role: "master",
-	}
 
 	if serverArgs.masterHost != "" {
 		conf.Replication.Role = "slave"
+	} else {
+		conf.Replication.Role = "master"
+		conf.Replication.Id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
 	}
 
-	strPort := fmt.Sprintf("%d", serverArgs.port)
+	startServer(serverArgs)
+}
 
-	l, err := net.Listen("tcp", "0.0.0.0:"+strPort)
+func startServer(args *ServerArgs) {
+	port := fmt.Sprintf("%d", args.port)
+
+	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
-		log.Fatalln("Failed to bind to port " + strPort)
+		log.Fatalln("Failed to bind to port " + port)
 	}
 
-	log.Println("Server listening on port " + strPort)
+	log.Println("Server listening on port " + port)
 
 	defer l.Close()
 

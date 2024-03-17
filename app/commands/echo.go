@@ -1,9 +1,15 @@
 package commands
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
+)
 
 func Echo(args []string) string {
 	str := strings.Join(args, "")
 
-	return str
+	rs := resp.NewRespString(len(str), str)
+
+	return rs.Encode()
 }

@@ -1,7 +1,9 @@
 package conf
 
 type ReplicationConf struct {
-	Role string
+	Id     string
+	Offset int
+	Role   string
 }
 
-var Replication *ReplicationConf
+var Replication *ReplicationConf = &ReplicationConf{}

@@ -3,6 +3,7 @@ package commands
 import (
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/app/resp"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
@@ -12,7 +13,7 @@ type SetIput struct {
 	Exp   int
 }
 
-func Set(s store.DataStore, i *SetIput) {
+func Set(s store.DataStore, i *SetIput) string {
 	var exp time.Time
 
 	if i.Exp != 0 {
@@ -23,4 +24,8 @@ func Set(s store.DataStore, i *SetIput) {
 		Value:     i.Value,
 		ExpiresAt: exp,
 	}
+
+	rs := resp.NewRespString(2, "OK")
+
+	return rs.Encode()
 }

@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
@@ -13,13 +12,9 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 
 	switch cmd {
 	case "echo":
-		r := Echo(args)
-		rs := resp.NewRespString(len(r), r)
-		response = rs.Encode()
+		response = Echo(args)
 	case "ping":
-		r := Ping()
-		rs := resp.NewRespString(len(r), r)
-		response = rs.Encode()
+		response = Ping()
 	case "set":
 		input := &SetIput{
 			Key:   args[0],
@@ -34,30 +29,16 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 			}
 		}
 
-		Set(s, input)
-		rs := resp.NewRespString(2, "OK")
-		response = rs.Encode()
+		response = Set(s, input)
 	case "get":
-		v, f := Get(s, args[0])
-		bs := resp.NewRespBulkString(len(v), v)
-
-		if f {
-			response = bs.Encode()
-		} else {
-			response = bs.EncodeNull()
-		}
+		response = Get(s, args[0])
 	case "info":
 		r, err := Info(args[0])
 		if err != nil {
 			return "", err
 		}
 
-		for k, v := range r {
-			str := fmt.Sprintf("%s:%s", k, v)
-			bs := resp.NewRespBulkString(len(str), str)
-			response += bs.Encode()
-		}
-
+		response = r
 	default:
 		msg := "Command not found"
 		rs := resp.NewRespString(len(msg), msg)
