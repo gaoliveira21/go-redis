@@ -15,6 +15,8 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 		response = Echo(args)
 	case "ping":
 		response = Ping()
+	case "replconf":
+		response = ReplConf()
 	case "set":
 		input := &SetIput{
 			Key:   args[0],
