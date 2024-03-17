@@ -13,6 +13,7 @@ import (
 type RdbClient interface {
 	Ping() string
 	ReplConf([]string) string
+	PSync(replId string, offset int) string
 	Close() error
 }
 
@@ -39,7 +40,16 @@ func (c *client) ReplConf(s []string) string {
 	c.write(msg)
 	data := c.read()
 
-	log.Println(string(data))
+	return string(data)
+}
+
+func (c *client) PSync(replId string, offset int) string {
+	log.Println("Sending PSYNC")
+
+	msg := resp.NewRespArray([]string{"psync", replId, fmt.Sprintf("%d", offset)}).Encode()
+
+	c.write(msg)
+	data := c.read()
 
 	return string(data)
 }

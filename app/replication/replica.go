@@ -22,5 +22,6 @@ func Handshake(rdbClient client.RdbClient, port string) {
 
 	rdbClient.Ping()
 	rdbClient.ReplConf([]string{"listening-port", port})
-	rdbClient.ReplConf([]string{"capa psync2", port})
+	rdbClient.ReplConf([]string{"capa eof capa psync2", port})
+	rdbClient.PSync("?", -1)
 }
