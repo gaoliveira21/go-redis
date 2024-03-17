@@ -41,8 +41,7 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 		response = r
 	default:
 		msg := "Command not found"
-		rs := resp.NewRespString(len(msg), msg)
-		response = rs.Encode()
+		response = resp.NewRespString(len(msg), msg).Encode()
 	}
 
 	return response, nil

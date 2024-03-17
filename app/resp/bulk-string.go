@@ -7,8 +7,8 @@ type RespBulkString struct {
 	Value string
 }
 
-func NewRespBulkString(l int, v string) RespBulkString {
-	return RespBulkString{
+func NewRespBulkString(l int, v string) *RespBulkString {
+	return &RespBulkString{
 		Len:   l,
 		Value: v,
 	}

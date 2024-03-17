@@ -9,6 +9,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
 	"github.com/codecrafters-io/redis-starter-go/app/conf"
+	"github.com/codecrafters-io/redis-starter-go/app/replication"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
@@ -35,6 +36,12 @@ func startServer(args *ServerArgs) {
 	}
 
 	log.Println("Server listening on port " + port)
+
+	if conf.Replication.Role == "slave" {
+		c := replication.ConnecToMaster(args.masterHost, args.masterPort)
+
+		defer c.Close()
+	}
 
 	defer l.Close()
 

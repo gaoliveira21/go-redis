@@ -25,7 +25,5 @@ func Set(s store.DataStore, i *SetIput) string {
 		ExpiresAt: exp,
 	}
 
-	rs := resp.NewRespString(2, "OK")
-
-	return rs.Encode()
+	return resp.NewRespString(2, "OK").Encode()
 }

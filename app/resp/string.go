@@ -5,8 +5,8 @@ type RespString struct {
 	Value string
 }
 
-func NewRespString(l int, s string) RespString {
-	return RespString{
+func NewRespString(l int, s string) *RespString {
+	return &RespString{
 		Len:   l,
 		Value: s,
 	}

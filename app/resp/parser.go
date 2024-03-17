@@ -13,7 +13,7 @@ func RespParse(data []byte) (*RespMessage, error) {
 	switch data[0] {
 	case '*':
 		{
-			r, err := parseArray(data)
+			r, err := DecodeToRespArray(string(data))
 			if err != nil {
 				return nil, err
 			}

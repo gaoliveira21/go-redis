@@ -1,6 +1,7 @@
 package resp
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -8,18 +9,22 @@ import (
 
 type RespArray struct {
 	Len  int
-	Args []RespBulkString
+	Args []*RespBulkString
 }
 
-func getLen(s string) (int, error) {
-	r, _ := regexp.Compile(`[0-9]+`)
-	match := r.FindString(s)
+func NewRespArray(strs []string) *RespArray {
+	respArr := &RespArray{
+		Len: len(strs),
+	}
 
-	return strconv.Atoi(match)
+	for _, s := range strs {
+		respArr.Args = append(respArr.Args, NewRespBulkString(len(s), s))
+	}
+
+	return respArr
 }
 
-func parseArray(data []byte) (*RespArray, error) {
-	str := string(data)
+func DecodeToRespArray(str string) (*RespArray, error) {
 	lines := strings.Split(str, "\r\n")
 
 	arrMsg := RespArray{}
@@ -52,4 +57,23 @@ func parseArray(data []byte) (*RespArray, error) {
 	}
 
 	return &arrMsg, nil
+}
+
+func (ra *RespArray) Encode() string {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("*%d\r\n", ra.Len))
+
+	for _, arg := range ra.Args {
+		sb.WriteString(arg.Encode())
+	}
+
+	return sb.String()
+}
+
+func getLen(s string) (int, error) {
+	r, _ := regexp.Compile(`[0-9]+`)
+	match := r.FindString(s)
+
+	return strconv.Atoi(match)
 }

@@ -9,7 +9,5 @@ import (
 func Echo(args []string) string {
 	str := strings.Join(args, "")
 
-	rs := resp.NewRespString(len(str), str)
-
-	return rs.Encode()
+	return resp.NewRespString(len(str), str).Encode()
 }

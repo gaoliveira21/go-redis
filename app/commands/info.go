@@ -19,9 +19,9 @@ func Info(t string) (string, error) {
 		sb.WriteString(fmt.Sprintf("master_replid:%s\n", conf.Replication.Id))
 		sb.WriteString(fmt.Sprintf("master_repl_offset:%v", conf.Replication.Offset))
 
-		bs := resp.NewRespBulkString(len(sb.String()), sb.String())
+		r := resp.NewRespBulkString(len(sb.String()), sb.String()).Encode()
 
-		return bs.Encode(), nil
+		return r, nil
 	default:
 		return "", errors.New("invalid argument received")
 	}
