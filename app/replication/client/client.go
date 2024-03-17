@@ -1,7 +1,9 @@
 package client
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -37,6 +39,8 @@ func (c *client) ReplConf(s []string) string {
 	c.write(msg)
 	data := c.read()
 
+	log.Println(string(data))
+
 	return string(data)
 }
 
@@ -68,7 +72,9 @@ func (c *client) read() []byte {
 	data := make([]byte, 1024)
 	n, err := c.tcpConn.Read(data)
 	if err != nil {
-		log.Fatalln("Error reading data", err.Error())
+		if !errors.Is(err, io.EOF) {
+			log.Fatalln("Error reading data", err.Error())
+		}
 	}
 
 	log.Printf("%d bytes received from master\n", n)

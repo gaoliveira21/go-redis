@@ -39,6 +39,7 @@ func startServer(args *ServerArgs) {
 
 	if conf.Replication.Role == "slave" {
 		c := replication.ConnecToMaster(args.masterHost, args.masterPort)
+		replication.Handshake(c, port)
 
 		defer c.Close()
 	}
