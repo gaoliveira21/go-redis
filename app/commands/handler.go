@@ -17,6 +17,8 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 		response = Ping()
 	case "replconf":
 		response = ReplConf()
+	case "psync":
+		response = PSync()
 	case "set":
 		input := &SetIput{
 			Key:   args[0],
