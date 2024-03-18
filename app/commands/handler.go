@@ -1,24 +1,27 @@
 package commands
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func Handle(cmd string, args []string, s store.DataStore) (string, error) {
-	var response string
+func Handle(cmd string, args []string, s store.DataStore) ([]string, error) {
+	var response []string
 
 	switch cmd {
 	case "echo":
-		response = Echo(args)
+		response = append(response, Echo(args))
 	case "ping":
-		response = Ping()
+		response = append(response, Ping())
 	case "replconf":
-		response = ReplConf()
+		response = append(response, ReplConf())
 	case "psync":
-		response = PSync()
+		r, rdbFile := PSync()
+		response = append(response, r)
+		response = append(response, fmt.Sprintf("$%d\r\n%s", len(rdbFile), rdbFile))
 	case "set":
 		input := &SetIput{
 			Key:   args[0],
@@ -29,23 +32,23 @@ func Handle(cmd string, args []string, s store.DataStore) (string, error) {
 			var err error
 			input.Exp, err = strconv.Atoi(args[3])
 			if err != nil {
-				return "", err
+				return []string{}, err
 			}
 		}
 
-		response = Set(s, input)
+		response = append(response, Set(s, input))
 	case "get":
-		response = Get(s, args[0])
+		response = append(response, Get(s, args[0]))
 	case "info":
 		r, err := Info(args[0])
 		if err != nil {
-			return "", err
+			return []string{}, err
 		}
 
-		response = r
+		response = append(response, r)
 	default:
 		msg := "Command not found"
-		response = resp.NewRespString(len(msg), msg).Encode()
+		response = append(response, resp.NewRespString(len(msg), msg).Encode())
 	}
 
 	return response, nil

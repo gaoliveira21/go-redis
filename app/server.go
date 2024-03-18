@@ -78,16 +78,18 @@ func handleConn(conn net.Conn) {
 			continue
 		}
 
-		response, err := commands.Handle(msg.Command, msg.Args, store)
+		responses, err := commands.Handle(msg.Command, msg.Args, store)
 		if err != nil {
 			log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
 			continue
 		}
 
-		n, err := conn.Write([]byte(response))
-		if err != nil {
-			log.Fatalln("Error sending data: ", err.Error())
+		for _, response := range responses {
+			n, err := conn.Write([]byte(response))
+			if err != nil {
+				log.Fatalln("Error sending data: ", err.Error())
+			}
+			log.Printf("sent %d bytes\n", n)
 		}
-		log.Printf("sent %d bytes\n", n)
 	}
 }
