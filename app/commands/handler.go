@@ -2,45 +2,59 @@ package commands
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 
+	"github.com/codecrafters-io/redis-starter-go/app/conf"
+	"github.com/codecrafters-io/redis-starter-go/app/replication"
 	"github.com/codecrafters-io/redis-starter-go/app/resp"
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
-func Handle(cmd string, args []string, s store.DataStore) ([]string, error) {
+type HandlerInput struct {
+	Cmd   string
+	Args  []string
+	Store store.DataStore
+	Conn  net.Conn
+}
+
+func Handle(i *HandlerInput) ([]string, error) {
 	var response []string
 
-	switch cmd {
+	switch i.Cmd {
 	case "echo":
-		response = append(response, Echo(args))
+		response = append(response, Echo(i.Args))
 	case "ping":
 		response = append(response, Ping())
 	case "replconf":
 		response = append(response, ReplConf())
 	case "psync":
-		r, rdbFile := PSync()
+		r, rdbFile := PSync(i.Conn)
 		response = append(response, r)
 		response = append(response, fmt.Sprintf("$%d\r\n%s", len(rdbFile), rdbFile))
 	case "set":
 		input := &SetIput{
-			Key:   args[0],
-			Value: args[1],
+			Key:   i.Args[0],
+			Value: i.Args[1],
 		}
 
-		if len(args) >= 4 {
+		if len(i.Args) >= 4 {
 			var err error
-			input.Exp, err = strconv.Atoi(args[3])
+			input.Exp, err = strconv.Atoi(i.Args[3])
 			if err != nil {
 				return []string{}, err
 			}
 		}
 
-		response = append(response, Set(s, input))
+		response = append(response, Set(i.Store, input))
+		if conf.Replication.Role == "master" {
+			ra := resp.NewRespArray(append([]string{i.Cmd}, i.Args...)).Encode()
+			replication.Propagate([]byte(ra))
+		}
 	case "get":
-		response = append(response, Get(s, args[0]))
+		response = append(response, Get(i.Store, i.Args[0]))
 	case "info":
-		r, err := Info(args[0])
+		r, err := Info(i.Args[0])
 		if err != nil {
 			return []string{}, err
 		}

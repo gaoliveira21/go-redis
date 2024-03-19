@@ -83,7 +83,7 @@ func (c *client) read() []byte {
 	n, err := c.tcpConn.Read(data)
 	if err != nil {
 		if !errors.Is(err, io.EOF) {
-			log.Fatalln("Error reading data", err.Error())
+			log.Fatalln("(Client) Error reading data", err.Error())
 		}
 	}
 

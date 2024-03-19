@@ -69,7 +69,7 @@ func handleConn(conn net.Conn) {
 				break
 			}
 
-			log.Fatalln("Error reading data: ", err.Error())
+			log.Fatalln("(handleConn) Error reading data: ", err.Error())
 		}
 
 		msg, err := resp.RespParse(buffer)
@@ -78,7 +78,13 @@ func handleConn(conn net.Conn) {
 			continue
 		}
 
-		responses, err := commands.Handle(msg.Command, msg.Args, store)
+		input := &commands.HandlerInput{
+			Cmd:   msg.Command,
+			Args:  msg.Args,
+			Store: store,
+			Conn:  conn,
+		}
+		responses, err := commands.Handle(input)
 		if err != nil {
 			log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
 			continue
