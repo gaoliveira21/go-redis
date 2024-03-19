@@ -72,30 +72,32 @@ func handleConn(conn net.Conn) {
 			log.Fatalln("(handleConn) Error reading data: ", err.Error())
 		}
 
-		msg, err := resp.RespParse(buffer)
+		msgs, err := resp.RespParse(buffer)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
 
-		input := &commands.HandlerInput{
-			Cmd:   msg.Command,
-			Args:  msg.Args,
-			Store: store,
-			Conn:  conn,
-		}
-		responses, err := commands.Handle(input)
-		if err != nil {
-			log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
-			continue
-		}
-
-		for _, response := range responses {
-			n, err := conn.Write([]byte(response))
-			if err != nil {
-				log.Fatalln("Error sending data: ", err.Error())
+		for _, msg := range msgs {
+			input := &commands.HandlerInput{
+				Cmd:   msg.Command,
+				Args:  msg.Args,
+				Store: store,
+				Conn:  conn,
 			}
-			log.Printf("sent %d bytes\n", n)
+			responses, err := commands.Handle(input)
+			if err != nil {
+				log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
+				continue
+			}
+
+			for _, response := range responses {
+				n, err := conn.Write([]byte(response))
+				if err != nil {
+					log.Fatalln("Error sending data: ", err.Error())
+				}
+				log.Printf("sent %d bytes\n", n)
+			}
 		}
 	}
 }

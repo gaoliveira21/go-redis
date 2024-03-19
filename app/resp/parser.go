@@ -9,7 +9,7 @@ type RespMessage struct {
 	Args    []string
 }
 
-func RespParse(data []byte) (*RespMessage, error) {
+func RespParse(data []byte) ([]*RespMessage, error) {
 	switch data[0] {
 	case '*':
 		{
@@ -18,13 +18,18 @@ func RespParse(data []byte) (*RespMessage, error) {
 				return nil, err
 			}
 
-			args := []string{}
+			var msgs []*RespMessage
+			for _, v := range r {
+				args := []string{}
 
-			for _, v := range r.Args[1:] {
-				args = append(args, v.Value)
+				for _, v := range v.Args[1:] {
+					args = append(args, v.Value)
+				}
+
+				msgs = append(msgs, &RespMessage{Command: v.Args[0].Value, Args: args})
 			}
 
-			return &RespMessage{Command: r.Args[0].Value, Args: args}, nil
+			return msgs, nil
 		}
 	default:
 		return nil, errors.New("RespParse: data could not be parsed")

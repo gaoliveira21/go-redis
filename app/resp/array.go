@@ -24,13 +24,20 @@ func NewRespArray(strs []string) *RespArray {
 	return respArr
 }
 
-func DecodeToRespArray(str string) (*RespArray, error) {
+func DecodeToRespArray(str string) ([]*RespArray, error) {
 	lines := strings.Split(str, "\r\n")
 
-	arrMsg := RespArray{}
+	var result []*RespArray
+	arrMsg := &RespArray{}
 
 	for _, line := range lines {
 		if line[0] == '*' {
+			if len(result) >= 1 {
+				arrMsg = &RespArray{}
+			}
+
+			result = append(result, arrMsg)
+
 			l, err := getLen(line)
 			if err != nil {
 				return nil, err
@@ -56,7 +63,7 @@ func DecodeToRespArray(str string) (*RespArray, error) {
 		}
 	}
 
-	return &arrMsg, nil
+	return result, nil
 }
 
 func (ra *RespArray) Encode() string {
