@@ -13,7 +13,7 @@ type Replica struct {
 
 var replicas []*Replica
 
-func ConnecToMaster(host string, port int) client.RdbClient {
+func ConnectToMaster(host string, port int) client.RdbClient {
 	log.Printf("Connecting to master at %s:%d\n", host, port)
 
 	rdbClient, err := client.Connect(host, port)
@@ -29,7 +29,7 @@ func Handshake(rdbClient client.RdbClient, port string) {
 
 	rdbClient.Ping()
 	rdbClient.ReplConf([]string{"listening-port", port})
-	rdbClient.ReplConf([]string{"capa eof capa psync2", port})
+	rdbClient.ReplConf([]string{"capa", "eof", "capa", "psync2"})
 	rdbClient.PSync("?", -1)
 }
 
@@ -38,6 +38,8 @@ func AddReplica(r *Replica) {
 }
 
 func Propagate(b []byte) {
+	log.Printf("Propagating command to %d replicas", len(replicas))
+
 	for _, r := range replicas {
 		log.Printf("Replica: %s\n", r.Conn.RemoteAddr().String())
 		n, err := r.Conn.Write(b)

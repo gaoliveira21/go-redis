@@ -36,30 +36,34 @@ func startServer(args *ServerArgs) {
 	}
 
 	log.Println("Server listening on port " + port)
+	log.Println("Server role: ", conf.Replication.Role)
+
+	store := store.NewDataStore()
 
 	if conf.Replication.Role == "slave" {
-		c := replication.ConnecToMaster(args.masterHost, args.masterPort)
+		c := replication.ConnectToMaster(args.masterHost, args.masterPort)
 		replication.Handshake(c, port)
 
-		defer c.Close()
+		go handleConn(c.GetConn(), store)
 	}
 
 	defer l.Close()
 
 	for {
+		log.Println("Waiting for connections...")
 		conn, err := l.Accept()
 		if err != nil {
 			log.Fatalln("Error accepting connection: ", err.Error())
 		}
 
-		go handleConn(conn)
+		log.Println("Connection accepted")
+
+		go handleConn(conn, store)
 	}
 }
 
-func handleConn(conn net.Conn) {
+func handleConn(conn net.Conn, store store.DataStore) {
 	defer conn.Close()
-
-	store := store.NewDataStore()
 
 	for {
 		buffer := make([]byte, 1024)

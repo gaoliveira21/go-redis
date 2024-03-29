@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 
@@ -20,6 +21,8 @@ type HandlerInput struct {
 
 func Handle(i *HandlerInput) ([]string, error) {
 	var response []string
+
+	log.Printf("Command %s received\n", i.Cmd)
 
 	switch i.Cmd {
 	case "echo":
@@ -46,8 +49,9 @@ func Handle(i *HandlerInput) ([]string, error) {
 			}
 		}
 
-		response = append(response, Set(i.Store, input))
+		r := Set(i.Store, input)
 		if conf.Replication.Role == "master" {
+			response = append(response, r)
 			ra := resp.NewRespArray(append([]string{i.Cmd}, i.Args...)).Encode()
 			replication.Propagate([]byte(ra))
 		}

@@ -13,8 +13,10 @@ import (
 type RdbClient interface {
 	Ping() string
 	ReplConf([]string) string
-	PSync(replId string, offset int) string
-	Close() error
+	Set(key string, value string) string
+	Get(key string) string
+	PSync(replId string, offset int) (string, string)
+	GetConn() net.Conn
 }
 
 type client struct {
@@ -43,10 +45,22 @@ func (c *client) ReplConf(s []string) string {
 	return string(data)
 }
 
-func (c *client) PSync(replId string, offset int) string {
+func (c *client) PSync(replId string, offset int) (string, string) {
 	log.Println("Sending PSYNC")
 
 	msg := resp.NewRespArray([]string{"psync", replId, fmt.Sprintf("%d", offset)}).Encode()
+
+	c.write(msg)
+	data := c.read()
+	rdbFile := c.read()
+
+	return string(data), string(rdbFile)
+}
+
+func (c *client) Set(key string, value string) string {
+	log.Println("Sending SET")
+
+	msg := resp.NewRespArray([]string{"set", key, value}).Encode()
 
 	c.write(msg)
 	data := c.read()
@@ -54,8 +68,19 @@ func (c *client) PSync(replId string, offset int) string {
 	return string(data)
 }
 
-func (c *client) Close() error {
-	return c.tcpConn.Close()
+func (c *client) Get(key string) string {
+	log.Println("Sending GET")
+
+	msg := resp.NewRespArray([]string{"get", key}).Encode()
+
+	c.write(msg)
+	data := c.read()
+
+	return string(data)
+}
+
+func (c *client) GetConn() net.Conn {
+	return c.tcpConn
 }
 
 func Connect(host string, port int) (RdbClient, error) {
