@@ -14,6 +14,11 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/store"
 )
 
+type ServerChannel struct {
+	Data []byte
+	Conn net.Conn
+}
+
 func main() {
 	serverArgs := GetServerArgs()
 
@@ -39,12 +44,15 @@ func startServer(args *ServerArgs) {
 	log.Println("Server role: ", conf.Replication.Role)
 
 	store := store.NewDataStore()
+	serverCh := make(chan ServerChannel)
+
+	go tcpConsumer(store, serverCh)
 
 	if conf.Replication.Role == "slave" {
 		c := replication.ConnectToMaster(args.masterHost, args.masterPort)
 		replication.Handshake(c, port)
 
-		go handleConn(c.GetConn(), store)
+		go tcpProducer(c.GetConn(), serverCh)
 	}
 
 	defer l.Close()
@@ -58,11 +66,43 @@ func startServer(args *ServerArgs) {
 
 		log.Println("Connection accepted")
 
-		go handleConn(conn, store)
+		go tcpProducer(conn, serverCh)
 	}
 }
 
-func handleConn(conn net.Conn, store store.DataStore) {
+func tcpConsumer(store store.DataStore, ch chan ServerChannel) {
+	for c := range ch {
+		msgs, err := resp.RespParse(c.Data)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+
+		for _, msg := range msgs {
+			input := &commands.HandlerInput{
+				Cmd:   msg.Command,
+				Args:  msg.Args,
+				Store: store,
+				Conn:  c.Conn,
+			}
+			responses, err := commands.Handle(input)
+			if err != nil {
+				log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
+				continue
+			}
+
+			for _, response := range responses {
+				n, err := c.Conn.Write([]byte(response))
+				if err != nil {
+					log.Fatalln("Error sending data: ", err.Error())
+				}
+				log.Printf("sent %d bytes\n", n)
+			}
+		}
+	}
+}
+
+func tcpProducer(conn net.Conn, ch chan ServerChannel) {
 	defer conn.Close()
 
 	for {
@@ -76,32 +116,9 @@ func handleConn(conn net.Conn, store store.DataStore) {
 			log.Fatalln("(handleConn) Error reading data: ", err.Error())
 		}
 
-		msgs, err := resp.RespParse(buffer)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-
-		for _, msg := range msgs {
-			input := &commands.HandlerInput{
-				Cmd:   msg.Command,
-				Args:  msg.Args,
-				Store: store,
-				Conn:  conn,
-			}
-			responses, err := commands.Handle(input)
-			if err != nil {
-				log.Printf("Error executing %s: %s\n", msg.Command, err.Error())
-				continue
-			}
-
-			for _, response := range responses {
-				n, err := conn.Write([]byte(response))
-				if err != nil {
-					log.Fatalln("Error sending data: ", err.Error())
-				}
-				log.Printf("sent %d bytes\n", n)
-			}
+		ch <- ServerChannel{
+			Data: buffer,
+			Conn: conn,
 		}
 	}
 }
