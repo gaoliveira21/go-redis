@@ -72,6 +72,7 @@ func startServer(args *ServerArgs) {
 
 func tcpConsumer(store store.DataStore, ch chan ServerChannel) {
 	for c := range ch {
+		log.Println("Data from channel", string(c.Data))
 		msgs, err := resp.RespParse(c.Data)
 		if err != nil {
 			log.Println(err.Error())
